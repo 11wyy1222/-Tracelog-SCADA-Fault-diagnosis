@@ -1,0 +1,100 @@
+version: "2026-08-17"
+source_file: "../configs/14003.xlsx"
+source_sheet: "故障知识库"
+source_mapping:
+  feature_id: 标签
+  fault_description: 故障原因
+  judgment_method: 判断方式
+  source_sequence: 序号
+source_required_tags:
+  - grRotorSpeedFormSpeedRelay1
+  - grRotorSpeedFormSpeedRelay2
+  - grRotorSpeedFromCounterModule1
+  - grRotorSpeedFromCounterModule2
+  - ioperation_mode
+  - rotor_speed
+  - converter_generator_speed
+  - DINacelleRotorSpeedPluse
+  - generator_speed
+
+# 中文术语映射到现有时序处理产生的“原子特征”。规则里可以直接使用这些中文术语。
+glossary:
+  滑环跳变分数: slip_ring_jump_score
+  接近开关跳变分数: proximity_jump_score
+  发电机下降分数: generator_drop_score
+  叶轮上升分数: rotor_rise_score
+  发电机跳变分数: generator_jump_score
+  传感器稳定分数: sensor_stable_score
+  变流器归零分数: converter_zero_score
+  变流器下降分数: converter_drop_score
+  变流器负值比例: converter_negative_ratio
+  发电机与变流器相关系数: gen_converter_corr
+  转速传感器归零分数: sensor_zero_score
+  叶轮下降分数: rotor_drop_score
+
+# natural_rule 使用可审计的受控自然语言：支持中文术语、加减乘除、且/或、比较、
+# 较大值(...)/较小值(...)/绝对值(...)/clip(...) 及中英文括号。
+features:
+  - feature_id: A
+    source_sequence: 8
+    fault_description: 滑环编码器转速跳变
+    judgment_method: 超速继电器及计数模块检测滑环编码器转速跳变
+    natural_rule: 滑环跳变分数
+    weight: 1.0
+    enabled: true
+
+  - feature_id: B
+    source_sequence: 2
+    fault_description: 接近开关转速跳变
+    judgment_method: 超速继电器及计数模块检测接近开关转速跳变
+    natural_rule: 接近开关跳变分数
+    weight: 1.0
+    enabled: true
+
+  - feature_id: C
+    source_sequence: 3
+    fault_description: 发电机联轴器打滑
+    judgment_method: 超速继电器及计数模块检测接近开关和滑环编码器转速平稳无跳变，发电机转速突然跌落，同时叶轮转速有升高趋势
+    natural_rule: 发电机下降分数 * 叶轮上升分数 * 传感器稳定分数
+    weight: 1.0
+    enabled: true
+
+  - feature_id: D
+    source_sequence: 4
+    fault_description: 发电机转速变化率超限
+    judgment_method: 超速继电器及计数模块检测接近开关和滑环编码器转速平稳无跳变，发电机转速存在瞬时突变（一般是运行模式小于14的情况下）
+    natural_rule: 发电机跳变分数 * 传感器稳定分数
+    weight: 1.0
+    enabled: true
+
+  - feature_id: E
+    source_sequence: 5
+    fault_description: 滑环编码器和接近开关转速均跳变
+    judgment_method: 超速继电器及计数模块检测接近开关和滑环编码器转速均跳变
+    natural_rule: 较小值（滑环跳变分数，接近开关跳变分数）
+    weight: 1.0
+    enabled: true
+
+  - feature_id: F
+    source_sequence: 6
+    fault_description: 变流器检测发电机转速异常
+    judgment_method: 超速继电器及计数模块检测接近开关和滑环编码器转速平稳无跳变，变流器检测发电机转速为0或者突然掉落
+    natural_rule: 较大值（变流器归零分数，变流器下降分数） * 传感器稳定分数
+    weight: 1.0
+    enabled: true
+
+  - feature_id: G
+    source_sequence: 7
+    fault_description: 风机背风反转
+    judgment_method: 发电机转速与变流器检测发电机转速相同，但是变流器检测发电机转速为负值
+    natural_rule: 变流器负值比例 * 较大值（发电机与变流器相关系数，0）
+    weight: 1.0
+    enabled: true
+
+  - feature_id: H
+    source_sequence: 1
+    fault_description: 滑环编码器或接近开关无转速
+    judgment_method: 滑环编码器或接近开关无转速，rotor_speed出现掉落的情况
+    natural_rule: 转速传感器归零分数 * 叶轮下降分数
+    weight: 1.0
+    enabled: true

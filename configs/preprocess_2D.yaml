@@ -1,0 +1,210 @@
+# -------------------------------------------------
+# 项目根路径（由代码在运行时自动计算，保持占位符）
+# -------------------------------------------------
+project:
+  # 这里不写具体路径，启动时会自动补全为：Path(__file__).resolve().parents[1]
+  root: "__PROJECT_ROOT__"
+
+# -------------------------------------------------
+# 数据源（输入） & 处理后输出目录
+# -------------------------------------------------
+data:
+  # 注意：开头只有两个杠，中间只需一个杠
+  source_excel: 'D:\data\14003_sc_rotorandgeneratorspeeddiffmax_1.xlsx'
+
+  source_test_excel: '\\Imzspc1065\故障数据汇总\14003_SC_叶轮和发电机转速偏差过大故障\Tracelog - 副本'
+
+  processed_dir: './data/叶轮超速'
+
+  reports_dir: '\\Imzspc1065\故障数据汇总\叶轮超速\output'
+
+  #批量预测的输出位置
+output:
+  prediction_csv: "__PROJECT_ROOT__/output_results/prediction_results.csv"
+  prediction_report_img: "__PROJECT_ROOT__/output_results/prediction_report.png"
+
+# -------------------------------------------------
+# 模型相关（保存、文件名）
+# -------------------------------------------------
+model:
+  # 运行时会被自动拼接为: <project_root>/models
+  save_dir: "./external_data/ml_data"
+
+  filename: '叶轮超速.pt'
+
+# -------------------------------------------------
+# Qdrant 向量数据库配置
+# -------------------------------------------------
+db:
+  host: "localhost"
+  port: 6333
+  collection_name: "wind_turbine_fault_diagnosis"
+  batch_upload_size: 50   # 批量上传大小
+
+# -------------------------------------------------
+# 全局常量（业务、时间窗口等）
+# -------------------------------------------------
+constants:
+  # 故障截取窗口（秒），写成 list 便于直接读取
+  timestamp_window: [-2000, 500]
+
+  # 无标签预测时使用的默认故障时间点（相对时间轴的 0 点）
+  default_fault_time: 0
+
+# -------------------------------------------------
+# 传感器通道（业务侧硬编码）
+# -------------------------------------------------
+channels:
+  # 单通道特征提取（每个 channel 产生 80 维特征）
+  main_sensor_channels:
+    - rotor_speed
+    - grRotorSpeedFormSpeedRelay1
+    - grRotorSpeedFormSpeedRelay2
+    - grRotorSpeedFromCounterModule1
+    - generator_speed
+    - grRotorSpeedFromCounterModule2
+
+
+  # 多通道同步性/业务特征（9 维特征）
+  multi_analysis_channels:
+
+  # 业务逻辑中硬编码的关键通道（用于特定规则检查）
+  key_rotor_channel:
+
+# -------------------------------------------------
+# Excel 列名映射（如果表头改动，只改这里）
+# -------------------------------------------------
+excel:
+  # Tracelog 路径所在列
+  trace_path_column: 'tr_path'   # 或者 'tracelog_path'，直接改这里即可
+
+  # 标签列名
+  label_column: 'label'           # 或者 'label'
+
+  # 故障原因列（可选）
+  fault_reason_column: '故障原因'     # 或者 'fault_reason'
+
+  # 故障时间列（可选）
+  fault_time_column: '故障时间'        # 或者 'fault_time'
+
+# -------------------------------------------------
+# 知识库文件（相对项目根目录）
+# -------------------------------------------------
+knowledge:
+  fault_knowledge_file: "__PROJECT_ROOT__/configs/14003.xlsx"
+  label_column: '标签'
+  id_column: '序号'
+
+# -------------------------------------------------
+# 数据划分配置
+# -------------------------------------------------
+data_split:
+  test_size: 0.1          # 测试集比例 (10%)
+  val_size: 0.111         # 验证集比例 (1/9 ≈ 11.1%)
+  random_seed: 42         # 随机种子
+  stratify: true          # 是否按标签进行分层抽样
+
+# -------------------------------------------------
+# 数据处理参数
+# -------------------------------------------------
+data_processing:
+  min_rows_after_window: 5           # 时间窗口截取后的最小行数
+  time_offset_threshold: 10000       # 时间偏置校正阈值
+  column_offset_check_range: 5       # 列偏移检测范围
+  time_value_threshold: -100         # 判断是否为时间列的最小值
+
+  # 缺失值处理策略
+  missing_channel_strategy: 'zero'   # 可选: 'zero', 'nan', 'skip'
+  add_missing_indicator: false       # 缺失指示器（树模型不需要）
+
+# -------------------------------------------------
+# 特征提取配置
+# -------------------------------------------------
+feature_extraction:
+  general:
+    fault_timestamp: 0
+    multi_channels: []
+  
+  stat:
+    epsilon: 1e-8                    # 防除零常数
+    stability_segments: 4            # 稳定性分段数
+    mutation_std_ratio: 1.5          # 突变检测标准差倍数
+    min_len_mutation: 10             # 突变检测最小长度
+  
+  dynamic:
+    window_pre_fault: 2000           # 故障前窗口大小
+    window_transient: 500            # 瞬态过程窗口
+    window_post_fault: 2000          # 故障后窗口大小
+    response_thresh_ratio: 0.5       # 响应阈值比例
+    rise_rate_idx_min: 10            # 上升率计算最小索引
+  
+  freq:
+    bands:                           # 频带划分
+      - [0, 0.1]
+      - [0.1, 0.3]
+      - [0.3, 0.5]
+    high_freq_filter:
+      order: 3                       # 高通滤波器阶数
+      cutoff: 0.1                    # 高通滤波截止频率
+      type: 'high'                   # 滤波器类型
+  
+  period:
+    peak_height_std_ratio: 0.5       # 峰值高度标准差倍数
+    business_dist: 10                # 业务规则中的距离参数
+    min_len: 50                      # 最小数据长度
+  
+  business:
+    jump_window: 5                   # 跳跃检测窗口
+    jump_ratio: 2.0                  # 跳跃比例阈值
+    sync_tolerance: 10               # 同步容差
+    fluctuation_w_ratio: 0.1         # 波动窗口比例
+    pattern_thresh_high: 0.7         # 高阈值
+    pattern_thresh_low: 0.3          # 低阈值
+
+# -------------------------------------------------
+# 模型训练配置
+# -------------------------------------------------
+training:
+  random_seed: 42
+  n_jobs: -1                         # 并行任务数 (-1表示使用所有CPU核心)
+  
+  models:
+    RandomForest:
+      n_estimators: 300
+      max_depth: 12
+      min_samples_leaf: 2
+      class_weight: 'balanced'
+    
+    ExtraTrees:
+      n_estimators: 300
+      max_depth: 15
+      min_samples_split: 5
+      class_weight: 'balanced'
+    
+    XGBoost:
+      n_estimators: 200
+      max_depth: 6
+      learning_rate: 0.05
+      tree_method: 'hist'
+      subsample: 0.8
+      colsample_bytree: 0.7
+    
+    LightGBM:
+      n_estimators: 200
+      learning_rate: 0.05
+      num_leaves: 31
+      min_child_samples: 10
+      class_weight: 'balanced'
+      verbose: -1
+
+# -------------------------------------------------
+# 模型推理配置
+# -------------------------------------------------
+inference:
+  device: 'cpu'                      # 推理设备 (cpu/cuda)
+  weights_only: false                # 是否只加载权重
+
+# -------------------------------------------------
+# CSV列名映射（从Excel文件动态加载）
+# -------------------------------------------------
+column_mapping_file: '__PROJECT_ROOT__/configs/tracelog_tag_info.xlsx'

@@ -1,0 +1,58 @@
+# ============================================================
+# predict_standalone 精简配置
+# 仅保留 diagnose.py 运行所需的配置项
+# ============================================================
+
+project:
+  root: "__PROJECT_ROOT__"
+
+# 全局常量（默认值，可被 model_registry.yaml 覆盖）
+constants:
+  timestamp_window: [-2000, 500]
+  default_fault_time: 0
+
+# 传感器通道（默认值，可被 model_registry.yaml 覆盖）
+channels:
+  main_sensor_channels: []
+  multi_analysis_channels: []
+  key_rotor_channel: ''
+
+# 特征提取配置
+feature_extraction:
+  general:
+    fault_timestamp: 0
+    multi_channels: []
+  stat:
+    epsilon: 1e-8
+    stability_segments: 4
+    mutation_std_ratio: 1.5
+    min_len_mutation: 10
+  dynamic:
+    window_pre_fault: 2000
+    window_transient: 500
+    window_post_fault: 2000
+    response_thresh_ratio: 0.5
+    rise_rate_idx_min: 10
+  freq:
+    bands:
+      - [0, 0.1]
+      - [0.1, 0.3]
+      - [0.3, 0.5]
+    high_freq_filter:
+      order: 3
+      cutoff: 0.1
+      type: 'high'
+  period:
+    peak_height_std_ratio: 0.5
+    business_dist: 10
+    min_len: 50
+  business:
+    jump_window: 5
+    jump_ratio: 2.0
+    sync_tolerance: 10
+    fluctuation_w_ratio: 0.1
+    pattern_thresh_high: 0.7
+    pattern_thresh_low: 0.3
+
+# CSV列名映射（从Excel文件动态加载）
+column_mapping_file: '__PROJECT_ROOT__/configs/tracelog_tag_info.xlsx'

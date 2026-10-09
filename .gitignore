@@ -1,0 +1,56 @@
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE and OS metadata
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Training data, checkpoints, and serialized models
+data/*
+!data/*.py
+external_data/
+data_preprocessing/Tracelog/
+*.pt
+*.pth
+*.ckpt
+*.joblib
+*.npz
+
+# Experiment and runtime outputs
+experiments_logs/
+logs/
+output/
+outputs/
+output_results/
+config_files/
+predict_standalone/output/
+predict_standalone/saved_models/
+predict_standalone/scada_processed/
+
+# Generated reports and temporary Office files
+SCADA数据文件读取异常记录_*
+~$*
+*.tmp
+*.bak
+*.log

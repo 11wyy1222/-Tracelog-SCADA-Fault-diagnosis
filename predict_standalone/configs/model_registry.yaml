@@ -1,0 +1,116 @@
+# ============================================================
+# 故障模型注册表
+# 根据故障名称查找对应的模型类型、checkpoint路径、
+# 特征提取参数、故障诊断映射表等
+#
+# 路径相对于 predict_standalone/ 目录
+# 添加新故障：复制一个条目，修改 key 和各字段即可
+# ============================================================
+
+faults:
+
+  变桨心跳故障:
+    model_type: 'XGBoost'
+    checkpoint: 'saved_models/变桨心跳（XGBoost）.pt'
+    mapping: 'configs/class_mapping/all_faults_mapping.xlsx'
+    main_sensor_channels:
+      - ioperation_mode
+      - pitch_position_setpoint
+      - pitch_angle2
+      - pitch_angle3
+      - pitch_angle1
+    timestamp_window: [-2000, 2000]
+    default_fault_time: 0
+    num_classes: 2
+
+  叶轮和发电机转速偏差过大:
+    model_type: 'XGBoost'
+    checkpoint: 'saved_models/14003（XGBoost）.pt'
+    mapping: 'configs/class_mapping/all_faults_mapping.xlsx'
+    main_sensor_channels:
+      - rotor_speed
+      - grRotorSpeedFormSpeedRelay1
+      - grRotorSpeedFormSpeedRelay2
+      - grRotorSpeedFromCounterModule1
+      - generator_speed
+      - grRotorSpeedFromCounterModule2
+    multi_analysis_channels:
+
+    timestamp_window: [-2000, 500]
+    default_fault_time: 0
+    num_classes: 6
+
+  发电机转速故障（变流器）:
+    model_type: 'ExtraTrees'
+    checkpoint: 'saved_models/GeneratorSpeedFromConverterError（ExtraTrees）.pt'
+    mapping: 'configs/class_mapping/all_faults_mapping.xlsx'
+    main_sensor_channels:
+      - ioperation_mode
+      - generator_speed
+      - converter_generator_speed
+      - grRotorSpeedFormSpeedRelay2
+      - grRotorSpeedFromCounterModule2
+      - breaker_on_feedback1
+      - breaker_on_feedback2
+    timestamp_window: [-2000, 2000]
+    default_fault_time: 0
+    num_classes: 2
+
+  变桨超速:
+    model_type: 'XGBoost'
+    checkpoint: 'saved_models/PitchOverSpeed（XGBoost）.pt'
+    mapping: 'configs/class_mapping/all_faults_mapping.xlsx'
+    main_sensor_channels:
+      - rotor_speed
+      - grRotorSpeedFormSpeedRelay1
+      - grRotorSpeedFormSpeedRelay2
+      - grRotorSpeedFromCounterModule1
+      - grRotorSpeedFromCounterModule2
+    timestamp_window: [-2000, 2000]
+    default_fault_time: 0
+    num_classes: 4
+
+  安全链叶轮超速:
+    model_type: 'LightGBM'
+    checkpoint: 'saved_models/safetyRotor（LightGBM）.pt'
+    mapping: 'configs/class_mapping/all_faults_mapping.xlsx'
+    main_sensor_channels:
+      - rotor_speed
+      - grRotorSpeedFormSpeedRelay1
+      - grRotorSpeedFormSpeedRelay2
+      - grRotorSpeedFromCounterModule1
+    timestamp_window: [-2000, 200]
+    default_fault_time: 0
+    num_classes: 4
+
+  变桨轴X驱动器输出错误:
+    model_type: 'RandomForest'
+    checkpoint: 'saved_models/变桨轴X驱动器输出错误（RandomForest）.pt'
+    mapping: 'configs/class_mapping/all_faults_mapping.xlsx'
+    main_sensor_channels:
+      - ioperation_mode
+      - pitch_position_setpoint
+      - pitch_angle2
+      - pitch_angle3
+      - pitch_angle1
+      - pitch_motor_current1
+      - pitch_motor_current2
+      - pitch_motor_current3
+    timestamp_window: [-2000, 2000]
+    default_fault_time: 0
+    num_classes: 2
+
+  变桨轴X备用电源电压低:
+    model_type: 'ExtraTrees'
+    checkpoint: 'saved_models/变桨轴X备用电源电压低（ExtraTrees）.pt'
+    mapping: 'configs/class_mapping/all_faults_mapping.xlsx'
+    main_sensor_channels:
+      - grPitch1DCLinkVoltage
+      - grPitch2DCLinkVoltage
+      - grPitch3DCLinkVoltage
+      - grPitchBackupVoltage1
+      - grPitchBackupVoltage2
+      - grPitchBackupVoltage3
+    timestamp_window: [-7200, 1200]
+    default_fault_time: 0
+    num_classes: 2

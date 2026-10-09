@@ -1,0 +1,286 @@
+# ==================== 统一时间序列模型配置 ====================
+# 支持模型: TSLANet, TS-TCC, 及其他自定义模型
+
+# ==================== checkpoint路径（预测时使用） ====================
+checkpoint: './data/saved_models/变桨轴X驱动器输出错误（RandomForest）.pt'
+
+# ==================== 实验配置 ====================
+experiment:
+  description: 'Exp5'              # 实验描述
+  run_description: '叶轮超速'           # 运行描述
+  seed: 123                         # 随机种子
+  model: '叶轮超速'
+  # 模型选择: TSLANet, TS-TCC, base_CNN, RC, RandomForest, SVM, XGBoost, LightGBM, KNN, LogisticRegression
+
+# ==================== 训练配置 ====================
+training:
+  mode: 'supervised'
+  num_epochs: 50
+  batch_size: 16
+  learning_rate: 0.001              # 学习率
+  weight_decay: 0.0003              # 权重衰减
+  optimizer: 'adam'                 # 优化器: adam, adamw, sgd
+  
+  # 优化器参数
+  beta1: 0.9
+  beta2: 0.99
+  
+  # 学习率调度器
+  use_scheduler: true               # 是否使用学习率调度器
+  scheduler_type: 'reduce_on_plateau'  # 调度器类型
+  
+# ==================== 预训练配置 ====================
+pretraining:
+  enabled: true                     # 是否启用预训练
+  pretrain_epochs: 5               # 预训练轮数
+  pretrain_lr: 0.001                # 预训练学习率
+  masking_ratio: 0.4                # TSLANet掩码比例
+  
+  # 预训练模型路径
+  load_pretrained: false
+  pretrained_path: null
+  delete_layers: ['logits']         # 加载预训练时删除的层
+  freeze_backbone: false            # 是否冻结主干网络
+
+# ==================== 数据集配置 ====================
+dataset:
+  selected: '变桨轴X备用电源电压低'                 # 数据集名称
+  data_path: './data'               # 数据根目录
+  normalize: false                  # 是否归一化
+  drop_last: true                   # 是否丢弃最后不完整的批次
+
+# ==================== 路径配置 ====================
+paths:
+  home_path: null                   # 项目根目录(null=当前目录)
+  logs_save_dir: 'experiments_logs' # 日志保存目录
+  config_files_dir: 'config_files'  # 配置文件保存目录
+
+# ==================== 设备配置 ====================
+device: 'cuda'                      # 运行设备: cuda, cpu
+
+# ==================== 日志配置 ====================
+logging:
+  log_timestamp_format: '%Y%m%d_%H%M%S'
+  debug_separator: '='
+  debug_separator_length: 60
+  checkpoint_save_top_k: 1
+  monitor: 'val_loss'
+  mode: 'min'
+
+# ==================== 随机种子配置 ====================
+random_seed:
+  torch_deterministic: false
+  torch_benchmark: false
+
+# ==================== 模型特定配置 ====================
+# TSLANet模型配置
+TSLANet:
+  emb_dim: 128                      # 嵌入维度
+  depth: 2                          # 层数
+  patch_size: 8                     # 补丁大小
+  dropout_rate: 0.15                # Dropout比率
+  use_icb: true                     # 使用ICB
+  use_asb: true                     # 使用ASB
+  adaptive_filter: true             # 自适应滤波
+
+# TS-TCC模型配置
+TS-TCC:
+  kernel_size: 32                   # 卷积核大小
+  stride: 30                        # 步长
+  final_out_channels: 128           # 最终输出通道数
+  dropout: 0.35                     # Dropout比率
+  
+  # Context Contrast配置
+  context_contrast:
+    temperature: 0.2
+    use_cosine_similarity: true
+  
+  # Temporal Contrast配置
+  temporal_contrast:
+    hidden_dim: 64
+    timesteps: 15
+  
+  # 数据增强配置
+  augmentation:
+    jitter_scale_ratio: 1.0
+    jitter_ratio: 0.5
+    max_seg: 10
+
+# 基础CNN模型配置
+base_CNN:
+  kernel_size: 25
+  stride: 6
+  final_out_channels: 128
+  dropout: 0.35
+
+# RC模型配置
+RC:
+  n_internal_units: 100
+  spectral_radius: 0.99
+  connectivity: 0.3
+  input_scaling: 0.2
+  noise_level: 0.0
+  bidir: false
+  circle: false
+  mts_rep: 'mean'
+  w_ridge: 1.0
+
+# 随机森林配置
+RandomForest:
+  n_estimators: 300
+  max_depth: 12
+  min_samples_split: 2
+  min_samples_leaf: 2
+  class_weight: 'balanced'
+  random_state: 42
+
+# SVM配置
+SVM:
+  C: 1.0
+  kernel: 'rbf'  # 可选: 'linear', 'poly', 'rbf', 'sigmoid'
+  gamma: 'scale'
+  class_weight:
+    0: 1.0 # B
+    1: 1.5 # C
+    2: 1.0 # A
+  random_state: 42
+
+# XGBoost配置
+XGBoost:
+  n_estimators: 200
+  max_depth: 6
+  learning_rate: 0.05
+  tree_method: 'hist'
+  subsample: 0.8
+  colsample_bytree: 0.7
+  random_state: 42
+
+# LightGBM配置
+LightGBM:
+  n_estimators: 200
+  max_depth: -1
+  learning_rate: 0.05
+  num_leaves: 31
+  min_child_samples: 10
+  class_weight: 'balanced'
+  verbose: -1
+  random_state: 42
+
+# ExtraTrees配置
+ExtraTrees:
+  n_estimators: 300
+  max_depth: 15
+  min_samples_split: 5
+  class_weight: 'balanced'
+  random_state: 42
+
+# KNN配置
+KNN:
+  n_neighbors: 5
+  weights: 'uniform'  # 可选: 'uniform', 'distance'
+  algorithm: 'auto'
+  metric: 'minkowski'
+
+# 逻辑回归配置
+LogisticRegression:
+  C: 1.0
+  max_iter: 1000
+  random_state: 42
+
+ 
+
+# ==================== SCADA数据处理配置 ====================
+scada:
+  config_file: 'configs/preprocess_scada.yaml'  # SCADA处理配置文件路径
+  
+  # 时间窗口配置(可被preprocess_scada.yaml覆盖)
+  time_window:
+    start_offset: -600
+    end_offset: 600
+  
+  # 数据列配置
+  data_columns:
+    time_column: "fault_time"      # 时间列名
+    label_column: "label"         # 标签列名
+
+# ==================== 数据集特定配置 ====================
+dataset_configs:
+  # GeneratorSpeedFromConverterError 3D数据集
+  GeneratorSpeedFromConverterError:
+    input_channels: 5
+    features_len: 5999
+    seq_len: 6000
+    num_classes: 7
+    num_channels: 5
+
+  # 变桨心跳数据集
+  变桨心跳:
+    input_channels: 1
+    features_len: 409
+    seq_len: 409
+    num_classes: 2
+    num_channels: 1
+
+  # 14003数据集 - 叶轮和发电机转速偏差过大故障
+  14003:
+    input_channels: 1
+    features_len: 569
+    seq_len: 569
+    num_classes: 12
+    num_channels: 1
+
+  # Chaosu数据集
+  chaosu:
+    input_channels: 4
+    features_len: 52
+    seq_len: 12000
+    num_classes: 4
+    num_channels: 4
+
+  # Epilepsy数据集
+  Epilepsy:
+    input_channels: 1
+    features_len: 127
+    seq_len: 178
+    num_classes: 2
+    num_channels: 1
+
+  # HAR数据集
+  HAR:
+    input_channels: 9
+    features_len: 127
+    seq_len: 128
+    num_classes: 6
+    num_channels: 9
+
+  # SleepEDF数据集
+  sleepEDF:
+    input_channels: 1
+    features_len: 127
+    seq_len: 3000
+    num_classes: 5
+    num_channels: 1
+
+  # pFD数据集
+  pFD:
+    input_channels: 1
+    features_len: 127
+    seq_len: 144
+    num_classes: 3
+    num_channels: 1
+
+  # HHAR数据集
+  hhar:
+    input_channels: 3
+    features_len: 52
+    seq_len: 128
+    num_classes: 6
+    num_channels: 3
+
+  # 变桨轴X备用电源电压低数据集 (SCADA特征提取)
+  变桨轴X备用电源电压低:
+    input_channels: 6          # 通道数 = 标签点数量
+    features_len: 80           # 每通道特征维度 (统计20 + 动态25 + 频域12 + 稳定性15 + 周期性8)
+    seq_len: 480               # 总特征维度 (6通道 × 80维)
+    num_classes: 2             # 类别数，根据实际标签映射
+    num_channels: 6            # 通道数

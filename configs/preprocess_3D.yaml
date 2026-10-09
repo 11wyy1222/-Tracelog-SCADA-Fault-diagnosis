@@ -1,0 +1,50 @@
+# ==================== 3D数据预处理配置 ====================
+# 修改 paths 和 features 即可切换不同故障码
+
+# ==================== 文件路径配置 ====================
+paths:
+  label_file: "D:/data/08014_labels.csv"
+  config_file: "configs/tracelog_tag_info.xlsx"
+  output_dir: "./data/叶轮"
+
+# ==================== 特征选择配置 ====================
+features:
+  target_tags:
+    - ioperation_mode
+    - generator_speed
+    - converter_generator_speed
+    - rotor_speed_relay2
+    - rotor_speed_counter2
+    - breaker_on_feedback1
+    - breaker_on_feedback2
+
+# ==================== 数据处理配置 ====================
+processing:
+  max_seq_len: 6000
+  missing_value_method: "interpolate"
+  padding_mode: "constant"
+
+# ==================== 标准化配置 ====================
+normalization:
+  method: "zscore"
+  save_stats: true
+  stats_filename: "normalization_stats.npz"
+
+# ==================== 数据集划分配置 ====================
+split:
+  test_size: 0.2
+  val_test_split: 0.5
+  random_state: 42
+  stratify: false
+
+# ==================== 输出文件名配置 ====================
+output:
+  train_file: "train3D.pt"
+  val_file: "val3D.pt"
+  test_file: "test3D.pt"
+
+# ==================== 日志配置 ====================
+logging:
+  verbose: true
+  save_log: true
+  log_file: "preprocessing.log"
